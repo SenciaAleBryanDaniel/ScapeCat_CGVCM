@@ -3,7 +3,16 @@
 # ==========================================
 
 # Unity generated folders
-/ScapeCat_RS/[Ll]ibrary/
+**/[Ll]ibrary/
+**/[Tt]emp/
+**/[Oo]bj/
+**/[Bb]uild/
+**/[Bb]uilds/
+**/[Ll]ogs/
+**/[Uu]ser[Ss]ettings/
+**/[Mm]emoryCaptures/
+**/[Rr]ecordings/
+
 /ScapeCat_RS/[Tt]emp/
 /ScapeCat_RS/[Oo]bj/
 /ScapeCat_RS/[Bb]uild/
