@@ -8,6 +8,10 @@ public class CatMovement : MonoBehaviour
     [SerializeField] float jumpForce = 5f;
     [SerializeField] float rotationSpeed = 10f;
     
+    [Header("empuje de objetos")]
+    [SerializeField] private string tagMovible = "Movible";
+    [SerializeField] private float fuerzaEmpuje = 10f;
+
     [Header("camara")]
     [SerializeField] Transform cam;
     [SerializeField] float mouseSensitivity = 200f;
@@ -74,6 +78,26 @@ public class CatMovement : MonoBehaviour
 
             Quaternion targetRot = Quaternion.LookRotation(dir) * Quaternion.Euler(0, 90, 0);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
+        }
+    }
+
+    // --- LÓGICA DE EMPUJE ---
+    private void OnCollisionStay(Collision collision)
+    {
+        // 1. Verificamos si chocamos contra un objeto etiquetado como "Movible"
+        if (collision.gameObject.CompareTag(tagMovible))
+        {
+            Rigidbody rbCaja = collision.gameObject.GetComponent<Rigidbody>();
+
+            if (rbCaja != null && !rbCaja.isKinematic)
+            {
+                // 2. Dirección en el plano horizontal (X, Z) desde el gato hacia la caja
+                Vector3 direccion = collision.gameObject.transform.position - transform.position;
+                direccion.y = 0;
+
+                // 3. Empujamos progresivamente mientras mantenga la colisión
+                rbCaja.AddForce(direccion.normalized * fuerzaEmpuje, ForceMode.Force);
+            }
         }
     }
 

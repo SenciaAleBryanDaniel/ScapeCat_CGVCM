@@ -667,18 +667,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf8a6ce682f28984f8cd0a382304a166, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HUDController
-  vidasContainer: {fileID: 8318802440273929450}
-  barraAlimentacion: {fileID: 3000282505916730938}
-  barraBateria: {fileID: 8030530579549313977}
-  puntoCentral: {fileID: 518236131393128055}
+  vidasIconos: []
+  barraAlimentacion: {fileID: 2795922469706009553}
+  barraBateria: {fileID: 5387300594271497386}
+  puntoCentral: {fileID: 5033752056100796397}
   colorNormal: {r: 1, g: 1, b: 1, a: 1}
   colorInteractuable: {r: 0, g: 1, b: 0, a: 1}
   colorRecogible: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  colorEnemigo: {r: 1, g: 0, b: 0, a: 1}
-  raycastDistance: 5
-  capasInteractuables:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!1 &5113186313115421079
 GameObject:
   m_ObjectHideFlags: 0
