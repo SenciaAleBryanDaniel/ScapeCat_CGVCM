@@ -10,11 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 062d05d41d520c84c92025a0c1304871, type: 3}
-  m_Name: NuevoItem
+  m_Name: Llave Dorada
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  nombre: Llave de oro
-  icono: {fileID: 0}
+  nombre: Llave Dorada
+  icono: {fileID: 21300000, guid: 40c11f198c72a9f4d8e4410442dca50c, type: 3}
   cantidad: 1
-  descripcion: "Abre la puerta del s\xF3tano"
+  descripcion: Abre la puerta del Atico
   esConsumible: 0
   esClave: 1
+  tipoItem: 0
+  valorEfecto: 0

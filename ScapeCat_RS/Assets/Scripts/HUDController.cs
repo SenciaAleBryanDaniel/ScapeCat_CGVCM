@@ -1,28 +1,39 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.InputSystem; // <-- Necesario para la tecla E
 
 public class HUDController : MonoBehaviour
 {
+    [Header("Vidas")]
     public Image[] vidasIconos;
-    public Slider barraAlimentacion;
-    public Slider barraBateria;
-    public Image puntoCentral;
-    public Color colorNormal = Color.white;
-    public Color colorInteractuable = Color.green;
-    public Color colorRecogible = Color.yellow;
+    public Sprite corazonSprite;
+    public Color colorVida = new Color(1f, 0.2f, 0.2f);
+    public Color colorVacio = new Color(0.2f, 0.2f, 0.2f, 0.5f);
 
-    [Header("Configuración de Interacción")]
-    public float distanciaRaycast = 7f; // Un poco más amplio para facilitar alcanzar objetos
+    [Header("Alimentación")]
+    public Image comidaIcono;
+    public Slider barraAlimentacion;
+    public Text textoAlimentacion;
+
+    [Header("Batería")]
+    public Image bateriaIcono;
+    public Slider barraBateria;
+    public Text textoBateria;
+
+    [Header("Punto Central")]
+    public Image puntoCentral;
+    public Color colorNormal = new Color(1f, 1f, 1f, 0.7f);
+    public Color colorInteractuable = new Color(0.3f, 0.9f, 0.3f);
+    public Color colorRecogible = new Color(1f, 0.8f, 0.2f);
+
+    [Header("Configuración")]
+    public float raycastDistance = 5f;
+    public LayerMask capasInteractuables = -1;
 
     private GameManager gameManager;
 
     void Start()
     {
         gameManager = FindAnyObjectByType<GameManager>();
-        ActualizarVidas(7);
-        ActualizarAlimentacion(1f);
-        ActualizarBateria(1f);
     }
 
     void Update()
@@ -36,44 +47,19 @@ public class HUDController : MonoBehaviour
         if (Camera.main == null || puntoCentral == null) return;
 
         Ray rayo = new Ray(Camera.main.transform.position, Camera.main.transform.forward);
-
-        if (Physics.Raycast(rayo, out RaycastHit hit, distanciaRaycast))
+        if (Physics.Raycast(rayo, out RaycastHit hit, raycastDistance, capasInteractuables))
         {
-            // 1. Buscamos si el objeto o alguno de sus padres tiene el script ObjetoRotable
-            ObjetoRotable rotable = hit.collider.GetComponentInParent<ObjetoRotable>();
-
-            // 2. Si lo encuentra, o si el collider directo tiene la etiqueta Interactuable
-            if (rotable != null || hit.collider.CompareTag("Interactuable"))
-            {
-                puntoCentral.color = colorInteractuable; // Se pone verde
-
-                // Al presionar 'E'
-                if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
-                {
-                    if (rotable != null)
-                    {
-                        rotable.Interactuar();
-                    }
-                }
-            }
-            else if (hit.collider.CompareTag("Collectible"))
-            {
+            if (hit.collider.CompareTag("Collectible"))
                 puntoCentral.color = colorRecogible;
-            }
+            else if (hit.collider.CompareTag("Interactuable"))
+                puntoCentral.color = colorInteractuable;
             else
-            {
                 puntoCentral.color = colorNormal;
-            }
         }
         else
         {
             puntoCentral.color = colorNormal;
         }
-    }
-
-    public void Mostrar(bool mostrar)
-    {
-        gameObject.SetActive(mostrar);
     }
 
     public void ActualizarVidas(int cantidad)
@@ -82,19 +68,29 @@ public class HUDController : MonoBehaviour
         for (int i = 0; i < vidasIconos.Length; i++)
         {
             if (vidasIconos[i] != null)
-                vidasIconos[i].enabled = (i < cantidad);
+            {
+                vidasIconos[i].color = (i < cantidad) ? colorVida : colorVacio;
+                vidasIconos[i].enabled = true;
+            }
         }
     }
 
     public void ActualizarAlimentacion(float valor)
     {
-        if (barraAlimentacion != null)
-            barraAlimentacion.value = Mathf.Clamp01(valor);
+        valor = Mathf.Clamp01(valor);
+        if (barraAlimentacion != null) barraAlimentacion.value = valor;
+        if (textoAlimentacion != null) textoAlimentacion.text = Mathf.RoundToInt(valor * 100) + "%";
     }
 
     public void ActualizarBateria(float valor)
     {
-        if (barraBateria != null)
-            barraBateria.value = Mathf.Clamp01(valor);
+        valor = Mathf.Clamp01(valor);
+        if (barraBateria != null) barraBateria.value = valor;
+        if (textoBateria != null) textoBateria.text = Mathf.RoundToInt(valor * 100) + "%";
+    }
+
+    public void Mostrar(bool mostrar)
+    {
+        gameObject.SetActive(mostrar);
     }
 }

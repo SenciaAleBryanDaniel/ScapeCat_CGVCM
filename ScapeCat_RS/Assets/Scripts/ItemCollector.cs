@@ -15,6 +15,7 @@ public class ItemCollector : MonoBehaviour
     private bool canCollect = true;
     private bool playerNear = false;
     private InventarioController inventario;
+    private GatoStats gatoStats;
     private GameObject mensajeUI;
 
     void Start()
@@ -28,6 +29,7 @@ public class ItemCollector : MonoBehaviour
         }
 
         inventario = FindAnyObjectByType<InventarioController>();
+        gatoStats = FindAnyObjectByType<GatoStats>();
         CrearMensajeUI();
     }
 
@@ -42,15 +44,18 @@ public class ItemCollector : MonoBehaviour
         if (mensajeUI != null)
             mensajeUI.SetActive(playerNear && canCollect);
 
-        // Recoger con E
+        // Recoger con E (Input System)
         if (playerNear && canCollect && Keyboard.current.eKey.wasPressedThisFrame)
             Recoger();
     }
 
-    void OnTriggerStay(Collider other)
+    void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player") || other.CompareTag("Gato"))
+        {
             playerNear = true;
+            Debug.Log($"👀 Presiona E para recoger '{itemData.nombre}'");
+        }
     }
 
     void OnTriggerExit(Collider other)
@@ -61,22 +66,72 @@ public class ItemCollector : MonoBehaviour
 
     void Recoger()
     {
-        if (!canCollect || inventario == null) return;
+        if (!canCollect) return;
+
+        // ===== PRIMERO: SI ES CONSUMIBLE, APLICAR EFECTO =====
+        if (itemData.esConsumible && gatoStats != null)
+        {
+            switch (itemData.tipoItem)
+            {
+                case TipoItem.Comida:
+                    gatoStats.Comer(itemData.valorEfecto);
+                    Debug.Log($"🍖 {itemData.nombre}: +{itemData.valorEfecto} de hambre");
+                    break;
+
+                case TipoItem.Curacion:
+                    gatoStats.Curar(itemData.valorEfecto);
+                    Debug.Log($"❤️ {itemData.nombre}: +{itemData.valorEfecto} de vida");
+                    break;
+
+                case TipoItem.Bateria:
+                    gatoStats.RecargarBateria(itemData.valorEfecto);
+                    Debug.Log($"🔋 {itemData.nombre}: +{itemData.valorEfecto} de batería");
+                    break;
+
+                default:
+                    // Si es Normal pero consumible, va al inventario
+                    if (inventario != null)
+                    {
+                        if (inventario.EstaLleno())
+                        {
+                            Debug.Log("⚠️ Inventario lleno!");
+                            return;
+                        }
+                        canCollect = false;
+                        inventario.RecogerItem(itemData);
+                        Destroy(gameObject, 0.3f);
+                        Debug.Log($"🎯 {itemData.nombre} guardado en inventario");
+                    }
+                    return;
+            }
+
+            // Consumible usado → destruir objeto
+            canCollect = false;
+            if (mensajeUI != null) mensajeUI.SetActive(false);
+            Destroy(gameObject, 0.3f);
+            return;
+        }
+
+        // ===== SEGUNDO: SI NO ES CONSUMIBLE, VA AL INVENTARIO =====
+        if (inventario == null)
+        {
+            Debug.LogWarning("⚠️ No hay InventarioController en la escena");
+            return;
+        }
 
         if (inventario.EstaLleno())
         {
-            Debug.Log("⚠️ Inventario lleno!");
+            Debug.Log("⚠️ Inventario lleno! Usa 'I' para abrir y hacer espacio.");
             return;
         }
 
         canCollect = false;
-        inventario.AgregarItem(itemData);
+        inventario.RecogerItem(itemData);
 
-        if (mensajeUI != null)
-            mensajeUI.SetActive(false);
+        if (mensajeUI != null) mensajeUI.SetActive(false);
 
-        Destroy(gameObject);
-        Debug.Log($"🎯 {itemData.nombre} recogido!");
+        Destroy(gameObject, 0.3f);
+        Debug.Log($"🎯 {itemData.nombre} recogido en inventario");
     }
 
     void CrearMensajeUI()
