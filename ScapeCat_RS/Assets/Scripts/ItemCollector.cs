@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 public class ItemCollector : MonoBehaviour
 {
@@ -26,31 +27,21 @@ public class ItemCollector : MonoBehaviour
             itemData.nombre = gameObject.name;
         }
         
-        // Buscar inventario
         inventario = FindObjectOfType<InventarioController>();
-        
-        // Crear mensaje UI (opcional)
         CrearMensajeUI();
     }
 
     void Update()
     {
-        // Rotación flotante
         transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime);
         float offset = Mathf.Sin(Time.time * floatSpeed) * floatHeight;
         transform.position = startPos + Vector3.up * offset;
         
-        // Mostrar mensaje si el jugador está cerca
         if (mensajeUI != null)
-        {
             mensajeUI.SetActive(playerNear && canCollect);
-        }
         
-        // Recoger con E
-        if (playerNear && canCollect && Input.GetKeyDown(KeyCode.E))
-        {
+        if (playerNear && canCollect && Keyboard.current.eKey.wasPressedThisFrame)
             Recoger();
-        }
     }
 
     void OnTriggerEnter(Collider other)
@@ -65,40 +56,31 @@ public class ItemCollector : MonoBehaviour
     void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Player") || other.CompareTag("Gato"))
-        {
             playerNear = false;
-        }
     }
 
     void Recoger()
     {
         if (!canCollect || inventario == null) return;
         
-        // Verificar si el inventario está lleno
         if (inventario.EstaLleno())
         {
             Debug.Log("⚠️ Inventario lleno! Usa 'I' para abrir y hacer espacio.");
             return;
         }
         
-        // Recoger el item
         canCollect = false;
         inventario.RecogerItem(itemData);
         
-        // Ocultar mensaje
         if (mensajeUI != null)
-        {
             mensajeUI.SetActive(false);
-        }
         
-        // Destruir el objeto después de recogerlo
         Destroy(gameObject, 0.3f);
         Debug.Log($"🎯 Item '{itemData.nombre}' recogido!");
     }
 
     void CrearMensajeUI()
     {
-        // Buscar canvas existente o crear uno
         Canvas canvas = FindObjectOfType<Canvas>();
         if (canvas == null)
         {
@@ -109,7 +91,6 @@ public class ItemCollector : MonoBehaviour
             canvasGO.AddComponent<GraphicRaycaster>();
         }
         
-        // Crear mensaje
         mensajeUI = new GameObject("Mensaje_Recoger");
         mensajeUI.transform.SetParent(canvas.transform);
         
@@ -127,7 +108,6 @@ public class ItemCollector : MonoBehaviour
         text.alignment = TextAnchor.MiddleCenter;
         text.color = Color.white;
         
-        // Fondo semitransparente
         Image bg = mensajeUI.AddComponent<Image>();
         bg.color = new Color(0, 0, 0, 0.7f);
         

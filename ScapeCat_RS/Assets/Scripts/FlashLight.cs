@@ -1,15 +1,19 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
-public class Flashlight : MonoBehaviour {
-    Light light;
+public class Flashlight : MonoBehaviour
+{
+    private Light light;
 
-    void Start() {
+    void Start()
+    {
         light = GetComponent<Light>();
         light.enabled = false;
     }
 
-    void Update() {
-        if (Input.GetKeyDown(KeyCode.F))
+    void Update()
+    {
+        if (Keyboard.current.fKey.wasPressedThisFrame)
             light.enabled = !light.enabled;
     }
 }

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class CatMovement : MonoBehaviour
 {
@@ -24,7 +25,6 @@ public class CatMovement : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
         
-        // mantiene al gato siempre de pie, solo rota en Y
         rb.constraints = RigidbodyConstraints.FreezeRotationX | 
                          RigidbodyConstraints.FreezeRotationZ;
 
@@ -50,6 +50,12 @@ public class CatMovement : MonoBehaviour
 
     void Movimiento()
     {
+        Vector2 moveInput = new Vector2(
+            Keyboard.current.aKey.isPressed ? -1 : Keyboard.current.dKey.isPressed ? 1 : 0,
+            Keyboard.current.sKey.isPressed ? -1 : Keyboard.current.wKey.isPressed ? 1 : 0
+        );
+        moveInput.Normalize();
+
         Vector3 forward = cam.forward;
         Vector3 right = cam.right;
         forward.y = 0;
@@ -57,7 +63,7 @@ public class CatMovement : MonoBehaviour
         forward.Normalize();
         right.Normalize();
 
-        Vector3 dir = (forward * Input.GetAxisRaw("Vertical") + right * Input.GetAxisRaw("Horizontal"));
+        Vector3 dir = (forward * moveInput.y + right * moveInput.x);
         dir.y = 0;
         dir.Normalize();
 
@@ -66,7 +72,6 @@ public class CatMovement : MonoBehaviour
             Vector3 targetPos = transform.position + dir * moveSpeed * Time.deltaTime;
             rb.MovePosition(targetPos);
 
-            // solo rota en Y, el gato siempre mira hacia donde se mueve
             Quaternion targetRot = Quaternion.LookRotation(dir) * Quaternion.Euler(0, 90, 0);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
         }
@@ -74,8 +79,10 @@ public class CatMovement : MonoBehaviour
 
     void ActualizarCamara()
     {
-        yaw += Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
-        pitch = Mathf.Clamp(pitch - Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime, -20, 80);
+        Vector2 mouseDelta = Mouse.current.delta.ReadValue();
+        
+        yaw += mouseDelta.x * mouseSensitivity * Time.deltaTime;
+        pitch = Mathf.Clamp(pitch - mouseDelta.y * mouseSensitivity * Time.deltaTime, -20, 80);
 
         Vector3 target = transform.position + Vector3.up * cameraHeight;
         Vector3 desiredPos = target + Quaternion.Euler(pitch, yaw, 0) * Vector3.back * cameraDistance;
@@ -90,22 +97,19 @@ public class CatMovement : MonoBehaviour
 
     void Saltar()
     {
-        if (Input.GetKeyDown(KeyCode.Space) && grounded)
+        if (Keyboard.current.spaceKey.wasPressedThisFrame && grounded)
         {
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             grounded = false;
         }
     }
 
-    void OnCollisionEnter(Collision collision)
-    {
-        grounded = true;
-    }
+    void OnCollisionEnter(Collision collision) => grounded = true;
 
     public void ResetPosition(Vector3 newPosition)
     {
         transform.position = newPosition;
-        rb.velocity = Vector3.zero;
+        rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
     }
 }

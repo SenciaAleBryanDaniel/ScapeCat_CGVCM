@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class InventarioDebug : MonoBehaviour
 {
@@ -9,10 +10,10 @@ public class InventarioDebug : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Alpha1)) Recoger(llave);
-        if (Input.GetKeyDown(KeyCode.Alpha2)) Recoger(pocion);
-        if (Input.GetKeyDown(KeyCode.Alpha3)) Recoger(nota);
-        if (Input.GetKeyDown(KeyCode.Alpha0)) Limpiar();
+        if (Keyboard.current.digit1Key.wasPressedThisFrame) Recoger(llave);
+        if (Keyboard.current.digit2Key.wasPressedThisFrame) Recoger(pocion);
+        if (Keyboard.current.digit3Key.wasPressedThisFrame) Recoger(nota);
+        if (Keyboard.current.digit0Key.wasPressedThisFrame) Limpiar();
     }
 
     void Recoger(ItemData item)

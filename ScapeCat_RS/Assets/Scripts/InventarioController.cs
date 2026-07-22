@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using UnityEngine.InputSystem;
 
 public class InventarioController : MonoBehaviour
 {
@@ -34,13 +35,13 @@ public class InventarioController : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.I))
+        if (Keyboard.current.iKey.wasPressedThisFrame)
         {
             if (esperandoSlot) CancelarRecoleccion();
             else ToggleInventario();
         }
         
-        if (Input.GetKeyDown(KeyCode.Escape) && abierto && !esperandoSlot)
+        if (Keyboard.current.escapeKey.wasPressedThisFrame && abierto && !esperandoSlot)
             CerrarInventario();
     }
 

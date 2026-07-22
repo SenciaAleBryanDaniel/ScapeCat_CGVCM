@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 
 public class MenuPrincipal : MonoBehaviour
 {
@@ -35,7 +36,7 @@ public class MenuPrincipal : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape) && gameManager != null)
+        if (Keyboard.current.escapeKey.wasPressedThisFrame && gameManager != null)
         {
             if (gameManager.EstaPausado())
             {
@@ -77,7 +78,6 @@ public class MenuPrincipal : MonoBehaviour
         Cursor.visible = false;
     }
 
-    // acciones de botones
     public void NuevaPartida()
     {
         SonidoClick();
@@ -129,7 +129,6 @@ public class MenuPrincipal : MonoBehaviour
         CerrarMenu();
     }
 
-    // sonidos
     public void PlayHoverSound()
     {
         if (hoverSound != null && audioSource != null)
