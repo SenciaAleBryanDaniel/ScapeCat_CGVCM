@@ -12,6 +12,8 @@ TagManager:
   - HideZone
   - Collectible
   - Gato
+  - Movible
+  - Interactuable
   layers:
   - Default
   - TransparentFX
