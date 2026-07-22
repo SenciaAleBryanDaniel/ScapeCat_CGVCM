@@ -28,7 +28,7 @@ public class CatMovement : MonoBehaviour
         rb.constraints = RigidbodyConstraints.FreezeRotationX | 
                          RigidbodyConstraints.FreezeRotationZ;
 
-        gameManager = FindObjectOfType<GameManager>();
+        gameManager = FindAnyObjectByType<GameManager>();
         
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;

@@ -19,13 +19,13 @@ public class InventarioDebug : MonoBehaviour
     void Recoger(ItemData item)
     {
         if (item == null) return;
-        var inv = FindObjectOfType<InventarioController>();
-        inv?.RecogerItem(item);
+        var inv = FindAnyObjectByType<InventarioController>();
+        inv?.AgregarItem(item);  // ← Cambiado de RecogerItem a AgregarItem
     }
 
     void Limpiar()
     {
-        var inv = FindObjectOfType<InventarioController>();
+        var inv = FindAnyObjectByType<InventarioController>();
         if (inv == null) return;
         
         var items = inv.GetItems();

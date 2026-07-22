@@ -20,7 +20,7 @@ public class MenuPrincipal : MonoBehaviour
     void Start()
     {
         audioSource = gameObject.AddComponent<AudioSource>();
-        gameManager = FindObjectOfType<GameManager>();
+        gameManager = FindAnyObjectByType<GameManager>();
         
         if (gameManager == null)
         {

@@ -10,6 +10,8 @@ TagManager:
   - DoorLatch
   - Breakable
   - HideZone
+  - Collectible
+  - Gato
   layers:
   - Default
   - TransparentFX
