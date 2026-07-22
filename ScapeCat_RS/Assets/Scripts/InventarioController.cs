@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
-using UnityEngine.InputSystem;
 
 public class InventarioController : MonoBehaviour
 {
@@ -9,22 +8,23 @@ public class InventarioController : MonoBehaviour
     public GameObject inventarioPanel;
     public List<GameObject> slots = new List<GameObject>();
     public GameObject emptyText;
-    public GameObject usarBoton; // opcional
-
+    
     private List<ItemData> items = new List<ItemData>();
     private GameManager gameManager;
+    private ItemData itemPendiente;
     private bool abierto;
-
+    private bool esperandoSlot;
+    
     public System.Action OnInventarioActualizado;
 
     void Start()
     {
-        gameManager = FindAnyObjectByType<GameManager>();
+        gameManager = FindObjectOfType<GameManager>();
         inventarioPanel?.SetActive(false);
-
+        
         for (int i = 0; i < slots.Count; i++)
             items.Add(null);
-
+        
         for (int i = 0; i < slots.Count; i++)
         {
             int idx = i;
@@ -34,32 +34,118 @@ public class InventarioController : MonoBehaviour
 
     void Update()
     {
-        if (Keyboard.current.iKey.wasPressedThisFrame)
-            ToggleInventario();
-
-        if (Keyboard.current.escapeKey.wasPressedThisFrame && abierto)
+        if (Input.GetKeyDown(KeyCode.I))
+        {
+            if (esperandoSlot) CancelarRecoleccion();
+            else ToggleInventario();
+        }
+        
+        if (Input.GetKeyDown(KeyCode.Escape) && abierto && !esperandoSlot)
             CerrarInventario();
     }
 
     void OnSlotClick(int index)
     {
-        if (index < items.Count && items[index] != null)
+        if (esperandoSlot && itemPendiente != null)
         {
-            Debug.Log($"Usando {items[index].nombre}");
-            // Aquí puedes llamar a una función para usar el item
-            // Por ahora solo muestra el nombre
+            if (index < items.Count)
+            {
+                items[index] = itemPendiente;
+                itemPendiente = null;
+                esperandoSlot = false;
+                ActualizarUI();
+                CerrarInventario();
+                OnInventarioActualizado?.Invoke();
+            }
         }
+        else
+        {
+            if (index < items.Count && items[index] != null)
+                Debug.Log("slot " + (index + 1) + ": " + items[index].nombre);
+        }
+    }
+
+    public void RecogerItem(ItemData item)
+    {
+        if (item == null || esperandoSlot) return;
+        
+        int vacio = items.FindIndex(i => i == null);
+        
+        if (vacio != -1)
+        {
+            items[vacio] = item;
+            ActualizarUI();
+            OnInventarioActualizado?.Invoke();
+            Debug.Log("item guardado en slot " + (vacio + 1));
+        }
+        else
+        {
+            itemPendiente = item;
+            esperandoSlot = true;
+            AbrirInventario();
+            Debug.Log("selecciona un slot para " + item.nombre);
+            if (emptyText != null)
+            {
+                var txt = emptyText.GetComponent<Text>();
+                txt.text = "selecciona un slot";
+                txt.color = Color.yellow;
+                emptyText.SetActive(true);
+            }
+        }
+    }
+
+    void CancelarRecoleccion()
+    {
+        itemPendiente = null;
+        esperandoSlot = false;
+        CerrarInventario();
+        if (emptyText != null)
+        {
+            var txt = emptyText.GetComponent<Text>();
+            txt.text = "inventario vacio";
+            txt.color = Color.gray;
+        }
+        ActualizarUI();
+    }
+
+    public void ToggleInventario()
+    {
+        if (abierto)
+        {
+            if (esperandoSlot) CancelarRecoleccion();
+            else CerrarInventario();
+        }
+        else AbrirInventario();
+    }
+
+    void AbrirInventario()
+    {
+        abierto = true;
+        inventarioPanel?.SetActive(true);
+        gameManager?.PausarJuego();
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        ActualizarUI();
+    }
+
+    void CerrarInventario()
+    {
+        abierto = false;
+        inventarioPanel?.SetActive(false);
+        if (gameManager != null && !esperandoSlot)
+            gameManager.ReanudarJuego();
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     public bool AgregarItem(ItemData item)
     {
         int vacio = items.FindIndex(i => i == null);
         if (vacio == -1) return false;
-
+        
         items[vacio] = item;
         ActualizarUI();
         OnInventarioActualizado?.Invoke();
-        Debug.Log($"📦 {item.nombre} guardado en slot {vacio + 1}");
         return true;
     }
 
@@ -87,47 +173,22 @@ public class InventarioController : MonoBehaviour
     public bool EstaAbierto() => abierto;
     public List<ItemData> GetItems() => items;
 
-    void ToggleInventario()
-    {
-        if (abierto) CerrarInventario();
-        else AbrirInventario();
-    }
-
-    void AbrirInventario()
-    {
-        abierto = true;
-        inventarioPanel?.SetActive(true);
-        gameManager?.PausarJuego();
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        ActualizarUI();
-    }
-
-    void CerrarInventario()
-    {
-        abierto = false;
-        inventarioPanel?.SetActive(false);
-        gameManager?.ReanudarJuego();
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-    }
-
     void ActualizarUI()
     {
         bool tieneItems = false;
-
+        
         for (int i = 0; i < slots.Count; i++)
         {
             if (slots[i] == null) continue;
-
+            
             var icono = slots[i].transform.Find("Icono")?.gameObject;
             var cantidad = slots[i].transform.Find("Cantidad")?.gameObject;
-
+            
             if (i < items.Count && items[i] != null)
             {
                 var item = items[i];
                 tieneItems = true;
-
+                
                 if (icono != null)
                 {
                     icono.SetActive(true);
@@ -138,7 +199,7 @@ public class InventarioController : MonoBehaviour
                         img.color = Color.white;
                     }
                 }
-
+                
                 if (cantidad != null)
                 {
                     var txt = cantidad.GetComponent<Text>();
@@ -152,16 +213,37 @@ public class InventarioController : MonoBehaviour
             }
             else
             {
-                if (icono != null) icono.SetActive(false);
+                if (icono != null)
+                {
+                    icono.SetActive(false);
+                    var img = icono.GetComponent<Image>();
+                    if (img != null) img.color = new Color(1, 1, 1, 0);
+                }
                 if (cantidad != null) cantidad.SetActive(false);
             }
         }
-
+        
         if (emptyText != null)
         {
-            emptyText.SetActive(!tieneItems);
             var txt = emptyText.GetComponent<Text>();
-            if (txt != null) txt.text = "Inventario vacío";
+            if (!esperandoSlot)
+            {
+                emptyText.SetActive(!tieneItems);
+                if (txt != null)
+                {
+                    txt.text = "inventario vacio";
+                    txt.color = Color.gray;
+                }
+            }
+            else
+            {
+                emptyText.SetActive(true);
+                if (txt != null && itemPendiente != null)
+                {
+                    txt.text = "selecciona un slot";
+                    txt.color = Color.yellow;
+                }
+            }
         }
     }
 }

@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using UnityEngine.InputSystem;
 
 public class MenuPrincipal : MonoBehaviour
 {
@@ -20,7 +19,7 @@ public class MenuPrincipal : MonoBehaviour
     void Start()
     {
         audioSource = gameObject.AddComponent<AudioSource>();
-        gameManager = FindAnyObjectByType<GameManager>();
+        gameManager = FindObjectOfType<GameManager>();
         
         if (gameManager == null)
         {
@@ -36,7 +35,7 @@ public class MenuPrincipal : MonoBehaviour
 
     void Update()
     {
-        if (Keyboard.current.escapeKey.wasPressedThisFrame && gameManager != null)
+        if (Input.GetKeyDown(KeyCode.Escape) && gameManager != null)
         {
             if (gameManager.EstaPausado())
             {
