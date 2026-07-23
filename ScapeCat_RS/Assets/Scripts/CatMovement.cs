@@ -1,0 +1,139 @@
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+public class CatMovement : MonoBehaviour
+{
+    [Header("movimiento")]
+    [SerializeField] float moveSpeed = 5f;
+    [SerializeField] float jumpForce = 5f;
+    [SerializeField] float rotationSpeed = 10f;
+    
+    [Header("empuje de objetos")]
+    [SerializeField] private string tagMovible = "Movible";
+    [SerializeField] private float fuerzaEmpuje = 10f;
+
+    [Header("camara")]
+    [SerializeField] Transform cam;
+    [SerializeField] float mouseSensitivity = 200f;
+    [SerializeField] float cameraDistance = 5f;
+    [SerializeField] float cameraHeight = 2f;
+    [SerializeField] LayerMask obstaclesMask = -1;
+    
+    private Rigidbody rb;
+    private float yaw, pitch = 20f;
+    private bool grounded;
+    private GameManager gameManager;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody>();
+        if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
+        
+        rb.constraints = RigidbodyConstraints.FreezeRotationX | 
+                         RigidbodyConstraints.FreezeRotationZ;
+
+        gameManager = FindAnyObjectByType<GameManager>();
+        
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    void Update()
+    {
+        if (gameManager != null && gameManager.EstaPausado()) return;
+        
+        Movimiento();
+        Saltar();
+    }
+
+    void LateUpdate()
+    {
+        if (gameManager != null && gameManager.EstaPausado()) return;
+        ActualizarCamara();
+    }
+
+    void Movimiento()
+    {
+        Vector2 moveInput = new Vector2(
+            Keyboard.current.aKey.isPressed ? -1 : Keyboard.current.dKey.isPressed ? 1 : 0,
+            Keyboard.current.sKey.isPressed ? -1 : Keyboard.current.wKey.isPressed ? 1 : 0
+        );
+        moveInput.Normalize();
+
+        Vector3 forward = cam.forward;
+        Vector3 right = cam.right;
+        forward.y = 0;
+        right.y = 0;
+        forward.Normalize();
+        right.Normalize();
+
+        Vector3 dir = (forward * moveInput.y + right * moveInput.x);
+        dir.y = 0;
+        dir.Normalize();
+
+        if (dir != Vector3.zero)
+        {
+            Vector3 targetPos = transform.position + dir * moveSpeed * Time.deltaTime;
+            rb.MovePosition(targetPos);
+
+            Quaternion targetRot = Quaternion.LookRotation(dir) * Quaternion.Euler(0, 90, 0);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
+        }
+    }
+
+    // --- LÓGICA DE EMPUJE ---
+    private void OnCollisionStay(Collision collision)
+    {
+        // 1. Verificamos si chocamos contra un objeto etiquetado como "Movible"
+        if (collision.gameObject.CompareTag(tagMovible))
+        {
+            Rigidbody rbCaja = collision.gameObject.GetComponent<Rigidbody>();
+
+            if (rbCaja != null && !rbCaja.isKinematic)
+            {
+                // 2. Dirección en el plano horizontal (X, Z) desde el gato hacia la caja
+                Vector3 direccion = collision.gameObject.transform.position - transform.position;
+                direccion.y = 0;
+
+                // 3. Empujamos progresivamente mientras mantenga la colisión
+                rbCaja.AddForce(direccion.normalized * fuerzaEmpuje, ForceMode.Force);
+            }
+        }
+    }
+
+    void ActualizarCamara()
+    {
+        Vector2 mouseDelta = Mouse.current.delta.ReadValue();
+        
+        yaw += mouseDelta.x * mouseSensitivity * Time.deltaTime;
+        pitch = Mathf.Clamp(pitch - mouseDelta.y * mouseSensitivity * Time.deltaTime, -20, 80);
+
+        Vector3 target = transform.position + Vector3.up * cameraHeight;
+        Vector3 desiredPos = target + Quaternion.Euler(pitch, yaw, 0) * Vector3.back * cameraDistance;
+
+        if (Physics.Linecast(target, desiredPos, out RaycastHit hit, obstaclesMask))
+            cam.position = hit.point - (desiredPos - target).normalized * 0.1f;
+        else
+            cam.position = desiredPos;
+
+        cam.LookAt(target);
+    }
+
+    void Saltar()
+    {
+        if (Keyboard.current.spaceKey.wasPressedThisFrame && grounded)
+        {
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            grounded = false;
+        }
+    }
+
+    void OnCollisionEnter(Collision collision) => grounded = true;
+
+    public void ResetPosition(Vector3 newPosition)
+    {
+        transform.position = newPosition;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+    }
+}
